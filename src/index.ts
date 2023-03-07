@@ -1,1 +1,7 @@
-console.log("2");
+import Koa from "koa";
+
+const app = new Koa();
+
+app.listen(3000, () => {
+    console.log("Server running at 3000 port!!");
+});
