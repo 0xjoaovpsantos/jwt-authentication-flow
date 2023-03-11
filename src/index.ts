@@ -3,7 +3,7 @@ import cors from "koa-cors";
 import Router from "@koa/router";
 import bodyParser from "koa-bodyparser";
 import { compare } from "bcrypt";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 
 interface IAuthRouteLoginRequest {
     email: string;
@@ -17,11 +17,46 @@ const users = [
     }
 ];
 
+const books = [
+    {
+        name: "JS",
+        description: "Lorem ipsum"
+    }
+]
 
 const app = new Koa();
 const route = new Router();
 
+const verifyToken = (ctx: Koa.ParameterizedContext, next: Koa.Next) => {
+    console.log(ctx);
 
+    const authToken = ctx.request.header.authorization;
+
+    const [, token] = authToken.split(" ");
+
+    if(!token){
+        ctx.status = 401;
+        ctx.body = {
+            message: "Unauthorized"
+        };
+        return;
+    }
+
+    try {
+        verify(token, "secret");
+        return next();
+    } catch(error) {
+        ctx.status = 401;
+        ctx.body = {
+            message: "Unauthorized"
+        };
+        console.log(error);
+        return;
+    }
+
+}
+
+route.use("/books", verifyToken);
 
 route.post("/auth", async (ctx, next) => {
 
@@ -30,7 +65,7 @@ route.post("/auth", async (ctx, next) => {
     if(!email || !password){
         ctx.status = 401;
         ctx.body = {
-            message: "Email or password incorret1"
+            message: "Email or password incorret"
         }
         return;
     }
@@ -40,7 +75,7 @@ route.post("/auth", async (ctx, next) => {
     if(!user){
         ctx.status = 401;
         ctx.body = {
-            message: "Email or password incorret2"
+            message: "Email or password incorret"
         }
         return;
     }
@@ -50,7 +85,7 @@ route.post("/auth", async (ctx, next) => {
     if(!passwordMatch) {
         ctx.status = 401;
         ctx.body = {
-            message: "Email or password incorret 3"
+            message: "Email or password incorret"
         }
         return;
     }
@@ -62,8 +97,16 @@ route.post("/auth", async (ctx, next) => {
         token
     }
 
-    
+    return;
 });
+
+route.get("/books", async (ctx, next) => {
+    ctx.body = {
+        books
+    };
+
+    return;
+})
 
 app.use(cors());
 app.use(bodyParser());
